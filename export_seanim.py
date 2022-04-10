@@ -111,6 +111,9 @@ def export_action(self, context, progress, action, filepath):
     for pose_bone in ob.pose.bones:
         anim_bone = SEAnim.Bone()
         anim_bone.name = pose_bone.name
+        anim_bone.modifier = pose_bone['bone_type']
+        anim_bone.useModifier = True
+        anim.header.boneAnimModifierCount += 1
         anim_bones[pose_bone.name] = anim_bone
 
     frames = {}

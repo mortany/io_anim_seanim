@@ -396,6 +396,7 @@ class Anim(object):
 
         header = self.header
         header.boneCount = len(self.bones)
+        #header.boneAnimModifierCount = len(self.bones)
 
         dataPresenceFlags = header.dataPresenceFlags
         dataPropertyFlags = header.dataPropertyFlags

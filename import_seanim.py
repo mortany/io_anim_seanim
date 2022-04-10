@@ -27,7 +27,26 @@ def first(a, b):
             return a
     return None
 
+def GetBoneMod(bone, boneAnimModifiers):
+    """
+        Attempt to resolve the animType for a bone based on
+         a given list of modifier bones
+        Returns None if no override is needed
+    """
+    # + [bone]  # Add [bone] to the parent list if the modifier affects
+    # a bone and its children instead of ONLY the children
+    # parents = bone.parent_recursive
+    # if len(parents) == 0 or len(boneAnimModifiers) == 0:
+        # return None
 
+    for modBone in boneAnimModifiers:
+        if bone.name == modBone.name:
+            # print("'%s' is (indirect) child of '%s'" %
+            #       (bone.name, modBone.name))
+            return modBone.modifier
+
+    # print("'%s' ~default" % (bone.name))
+    return 1
 def ResolvePotentialAnimTypeOverride(bone, boneAnimModifiers):
     """
         Attempt to resolve the animType for a bone based on
@@ -36,16 +55,15 @@ def ResolvePotentialAnimTypeOverride(bone, boneAnimModifiers):
     """
     # + [bone]  # Add [bone] to the parent list if the modifier affects
     # a bone and its children instead of ONLY the children
-    parents = bone.parent_recursive
-    if len(parents) == 0 or len(boneAnimModifiers) == 0:
-        return None
+    # parents = bone.parent_recursive
+    # if len(parents) == 0 or len(boneAnimModifiers) == 0:
+        # return None
 
-    for parent in parents:
-        for modBone in boneAnimModifiers:
-            if parent.name == modBone.name:
-                # print("'%s' is (indirect) child of '%s'" %
-                #       (bone.name, modBone.name))
-                return modBone.modifier
+    for modBone in boneAnimModifiers:
+        if bone.name == modBone.name:
+            # print("'%s' is (indirect) child of '%s'" %
+            #       (bone.name, modBone.name))
+            return modBone.modifier
 
     # print("'%s' ~default" % (bone.name))
     return None
@@ -111,7 +129,10 @@ def load_seanim(self, context, progress, filepath=""):
     ob = bpy.context.object
 
     bpy.ops.object.mode_set(mode='POSE')
-
+    
+    #bpy.types.PoseBone.bone_type = bpy.props.IntProperty(name='flags')
+    #bpy.types.Bone.custom_float2 = bpy.props.FloatProperty(name="Test Prob", default=0.3, min=0.0, max=1)
+    
     actionName = os.path.basename(os.path.splitext(filepath)[0])
     action = bpy.data.actions.new(actionName)
     ob.animation_data.action = action
@@ -130,6 +151,7 @@ def load_seanim(self, context, progress, filepath=""):
     bone_map = {}
     for bone in ob.pose.bones:
         name = bone.name.lower()
+        bone['bone_type'] = GetBoneMod(bone, anim.boneAnimModifiers)
         if name in bone_map:
             print("Warning: Bone name conflict for '%s'\n" % name)
         bone_map[bone.name.lower()] = bone
@@ -178,11 +200,10 @@ def load_seanim(self, context, progress, filepath=""):
 
                     # Viewanims are SEANIM_TYPE_ABSOLUTE - But all children of
                     # j_gun has a SEANIM_TYPE_RELATIVE override
-                    if (animType == SEAnim.SEANIM_TYPE.SEANIM_TYPE_ABSOLUTE and
-                            bone.parent is not None):
+                    if (animType == SEAnim.SEANIM_TYPE.SEANIM_TYPE_ABSOLUTE ):
                         bone.matrix.translation = bone.parent.matrix @ offset
-                    else:  # Use DELTA / RELATIVE results (ADDITIVE is unknown)
-                        bone.matrix_basis.translation = offset
+                    #else:  # Use DELTA / RELATIVE results (ADDITIVE is unknown)
+                        #bone.matrix_basis.translation = offset
 
                     # bone.keyframe_insert("location", index=-1, frame=key.frame, group=tag.name)  # nopep8
                     for axis, fcurve in enumerate(fcurves):
